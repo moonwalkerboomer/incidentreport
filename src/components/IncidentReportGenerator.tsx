@@ -217,7 +217,7 @@ export default function IncidentReportGenerator({
               CLEAR
             </button>
             <button className={styles.download} type="button" onClick={download} disabled={!ready}>
-              DOWNLOAD REPORT <span aria-hidden="true">&#8595;</span>
+              DOWNLOAD REPORT <span className={styles.downloadIcon} aria-hidden="true" />
             </button>
           </div>
         </section>

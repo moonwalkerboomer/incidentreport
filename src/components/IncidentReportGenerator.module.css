@@ -118,14 +118,36 @@
   color: white;
 }
 
-.download span {
+.downloadIcon {
+  position: relative;
   width: 25px;
   height: 25px;
   display: grid;
   place-items: center;
   background: var(--acid);
   color: var(--ink);
-  font-size: 18px;
+}
+
+.downloadIcon::before {
+  content: "";
+  position: absolute;
+  top: 5px;
+  left: 11px;
+  width: 2px;
+  height: 11px;
+  background: currentColor;
+}
+
+.downloadIcon::after {
+  content: "";
+  position: absolute;
+  top: 9px;
+  left: 8px;
+  width: 7px;
+  height: 7px;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(45deg);
 }
 
 .download:hover {
