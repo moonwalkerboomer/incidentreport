@@ -33,44 +33,68 @@ const emptyReport: IncidentReportValues = {
   recommendation: "",
 };
 
-function wrapText(
+function getWrappedLines(
+  context: CanvasRenderingContext2D,
+  text: string,
+  maxWidth: number,
+) {
+  const lines: string[] = [];
+  for (const paragraph of text.split("\n")) {
+    const words = paragraph.trim().split(/\s+/).filter(Boolean);
+    let current = "";
+
+    for (const word of words) {
+      const candidate = current ? `${current} ${word}` : word;
+      if (context.measureText(candidate).width <= maxWidth || !current) {
+        current = candidate;
+      } else {
+        lines.push(current);
+        current = word;
+      }
+    }
+
+    if (current) lines.push(current);
+  }
+
+  return lines;
+}
+
+function drawFittedText(
   context: CanvasRenderingContext2D,
   text: string,
   x: number,
   y: number,
   maxWidth: number,
-  lineHeight: number,
   maxLines: number,
+  maxFontSize: number,
+  minFontSize: number,
 ) {
-  const words = text.trim().split(/\s+/).filter(Boolean);
-  const lines: string[] = [];
-  let current = "";
+  let fontSize = maxFontSize;
+  let lines: string[] = [];
 
-  for (const word of words) {
-    const candidate = current ? `${current} ${word}` : word;
-    if (context.measureText(candidate).width <= maxWidth || !current) {
-      current = candidate;
-    } else {
-      lines.push(current);
-      current = word;
-      if (lines.length === maxLines - 1) break;
-    }
+  while (fontSize >= minFontSize) {
+    context.font = `bold ${fontSize}px "Courier New", monospace`;
+    lines = getWrappedLines(context, text, maxWidth);
+    if (lines.length <= maxLines) break;
+    fontSize -= 1;
   }
 
-  if (current && lines.length < maxLines) lines.push(current);
+  fontSize = Math.max(fontSize, minFontSize);
+  context.font = `bold ${fontSize}px "Courier New", monospace`;
+  lines = getWrappedLines(context, text, maxWidth);
 
-  lines.forEach((line, index) => {
-    let output = line;
-    while (context.measureText(output).width > maxWidth && output.length > 1) {
-      output = output.slice(0, -1);
+  const visibleLines = lines.slice(0, maxLines);
+  if (lines.length > maxLines) {
+    let lastLine = visibleLines[maxLines - 1] || "";
+    while (context.measureText(`${lastLine}\u2026`).width > maxWidth && lastLine.length > 1) {
+      lastLine = lastLine.slice(0, -1);
     }
-    if (index === maxLines - 1 && words.join(" ").length > lines.join(" ").length) {
-      while (context.measureText(`${output}\u2026`).width > maxWidth && output.length > 1) {
-        output = output.slice(0, -1);
-      }
-      output += "\u2026";
-    }
-    context.fillText(output, x, y + index * lineHeight);
+    visibleLines[maxLines - 1] = `${lastLine}\u2026`;
+  }
+
+  const lineHeight = Math.round(fontSize * 1.15);
+  visibleLines.forEach((line, index) => {
+    context.fillText(line, x, y + index * lineHeight);
   });
 }
 
@@ -109,9 +133,8 @@ export default function IncidentReportGenerator({
     context.fillText(report.incident.toUpperCase() || "\u2014", 558, 193);
     context.fillText(report.location.toUpperCase() || "\u2014", 524, 299);
 
-    context.font = 'bold 41px "Courier New", monospace';
-    wrapText(context, report.observation.toUpperCase() || "\u2014", 325, 478, 805, 47, 2);
-    wrapText(context, report.recommendation.toUpperCase() || "\u2014", 325, 704, 805, 46, 1);
+    drawFittedText(context, report.observation.toUpperCase() || "\u2014", 325, 478, 805, 2, 41, 25);
+    drawFittedText(context, report.recommendation.toUpperCase() || "\u2014", 325, 688, 805, 2, 39, 25);
   }, [report]);
 
   useEffect(() => {
@@ -170,22 +193,22 @@ export default function IncidentReportGenerator({
               <span>03 / OBSERVATION</span>
               <textarea
                 value={report.observation}
-                onChange={(event) => updateField("observation", event.target.value.slice(0, 76))}
+                onChange={(event) => updateField("observation", event.target.value.slice(0, 96))}
                 placeholder="Describe what was observed"
                 rows={3}
               />
-              <small>{report.observation.length}/76</small>
+              <small>{report.observation.length}/96</small>
             </label>
 
             <label className={styles.field}>
               <span>04 / RECOMMENDATION</span>
               <textarea
                 value={report.recommendation}
-                onChange={(event) => updateField("recommendation", event.target.value.slice(0, 35))}
+                onChange={(event) => updateField("recommendation", event.target.value.slice(0, 96))}
                 placeholder="Recommended action"
                 rows={2}
               />
-              <small>{report.recommendation.length}/35</small>
+              <small>{report.recommendation.length}/96</small>
             </label>
           </div>
 
