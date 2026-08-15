@@ -5,7 +5,7 @@ import styles from "./IncidentReportGenerator.module.css";
 
 const CANVAS_WIDTH = 1180;
 const CANVAS_HEIGHT = 768;
-const REPORT_GREEN = "#c0ff00";
+const REPORT_GREEN = "#c5f903";
 
 export type IncidentReportValues = {
   incident: string;
